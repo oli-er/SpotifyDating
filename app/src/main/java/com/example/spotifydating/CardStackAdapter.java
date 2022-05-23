@@ -51,9 +51,9 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
         public ViewHolder(View view) {
             super(view);
 
-            songNameTV = (TextView) view.findViewById(R.id.song_name);
-            artistNameTV = (TextView) view.findViewById(R.id.artist_name);
-            albumNameTV = (TextView) view.findViewById(R.id.album_name);
+            //songNameTV = (TextView) view.findViewById(R.id.song_name);
+            //artistNameTV = (TextView) view.findViewById(R.id.artist_name);
+            //albumNameTV = (TextView) view.findViewById(R.id.album_name);
 
             albumImage = (ImageView) view.findViewById(R.id.album_image);
 
@@ -79,9 +79,9 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
             */
 
             // Set textviews.
-            songNameTV.setText(data.getSong());
-            artistNameTV.setText(data.getArtist());
-            albumNameTV.setText(data.getAlbum());
+            //songNameTV.setText(data.getSong());
+            //artistNameTV.setText(data.getArtist());
+            //albumNameTV.setText(data.getAlbum());
         }
     }
 
@@ -97,4 +97,5 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
     public void setItems(List<SongItem> items) {
         this.items = items;
     }
+
 }

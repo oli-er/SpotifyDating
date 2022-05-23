@@ -1,26 +1,37 @@
 package com.example.spotifydating;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
 
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.spotifydating.databinding.ActivityMainBinding;
 import com.spotify.android.appremote.api.AppRemote;
@@ -37,6 +48,8 @@ import com.spotify.protocol.types.ListItem;
 import com.spotify.protocol.types.ListItems;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
+import com.spotify.sdk.android.auth.AuthorizationRequest;
+import com.spotify.sdk.android.auth.AuthorizationResponse;
 import com.yuyakaido.android.cardstackview.CardStackLayoutManager;
 import com.yuyakaido.android.cardstackview.CardStackListener;
 import com.yuyakaido.android.cardstackview.CardStackView;
@@ -45,6 +58,9 @@ import com.yuyakaido.android.cardstackview.Duration;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -53,236 +69,201 @@ import java.util.Locale;
 
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.types.Capabilities;
+import com.spotify.sdk.android.auth.AuthorizationClient;
+import com.spotify.sdk.android.auth.AuthorizationClient;
+import com.spotify.sdk.android.auth.AuthorizationRequest;
+import com.spotify.sdk.android.auth.AuthorizationResponse;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    // BottomNavigationView
+    BottomNavigationView navigationView;
+    SpotifyAPIHelper spotifyAPIHelper;
 
-    private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding;
-
-    private List<SongItem> songItems;
-    private CardStackLayoutManager cardStackLayoutManager;
-    private CardStackAdapter cardStackAdapter;
-
-    private static SpotifyAppRemote mSpotifyAppRemote;
-    private static final String CLIENT_ID = "f9a4127598ed4dd4aed26e20f8d30374";
-    private static final String REDIRECT_URI = "http://com.example.spotifydating/callback";
-
-    private final ErrorCallback mErrorCallback = this::logError;
-    private Subscription<PlayerState> mPlayerStateSubscription;
-
-
-    private final Subscription.EventCallback<PlayerState> mPlayerStateEventCallback =
-            new Subscription.EventCallback<PlayerState>() {
-                @Override
-                public void onEvent(PlayerState playerState) {
-
-                    if (playerState.track != null) {
-                        // Load track onto screen.
-                        loadTrack(playerState.track);
-                    }
-                }
-            };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        setSupportActionBar(binding.toolbar);
+        // Set statusbar color
+        Window window = this.getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
 
-        // Define list of songs.
-        Bitmap bitmap = BitmapFactory.decodeResource(this.getResources(),
-                R.drawable.ic_launcher_foreground);
+        navigationView = findViewById(R.id.bottom_navigation);
+
+        SwipeFragment swipeFragment = new SwipeFragment();
+        PlaylistFragment playlistFragment = new PlaylistFragment();
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.body_container, swipeFragment)
+                .commit();
+
+        SharedPreferences.Editor editor = getSharedPreferences("SPOTIFY", 0).edit();
+
+        SpotifyPlaylistHelper spotifyPlaylistHelper = new SpotifyPlaylistHelper(this);
+
+        spotifyPlaylistHelper.makePlaylist("SwipeMix", "Swipemix", false, new VolleyCallBack<String>() {
+            @Override
+            public void onSuccess(String data) {
+                editor.putString("playlist", data);
+            }
+        });
+
+        navigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                Fragment fragment = null;
+                switch (item.getItemId()) {
+                    case R.id.nav_swipe:
+                        fragment = swipeFragment;
+                        getSupportFragmentManager().beginTransaction().hide(playlistFragment).show(swipeFragment).commit();
+                        break;
+                    case R.id.nav_playlist:
+                        fragment = playlistFragment;
+                        if (playlistFragment.isAdded()) {
+                            getSupportFragmentManager().beginTransaction().show(playlistFragment).hide(swipeFragment).commit();
+                        } else {
+                            getSupportFragmentManager().beginTransaction().add(R.id.body_container, playlistFragment).hide(swipeFragment).commit();
+                        }
+                        break;
+                }
+
+                return true;
+            }
+        });
+
+        spotifyAPIHelper = new SpotifyAPIHelper(this, new SpotifyAPIHelper.ConnectionCallback() {
+            @Override
+            public void onConnected() {
+                swipeFragment.onSpotifyConnected(spotifyAPIHelper);
+                playlistFragment.onSpotifyConnected(spotifyAPIHelper);
+            }
+        });
+
+        /*
+        spotifyHelper = new SpotifyAPIHelper(this, new SpotifyAPIHelper.ConnectionCallback() {
+            @Override
+            public void onConnected() {
+                onSpotifyConnected();
+            }
+        });
 
         songItems = new ArrayList<SongItem>();
         Bitmap placeholderBitMap = BitmapFactory.decodeResource(this.getResources(),
                 R.drawable.ic_launcher_foreground);
         songItems.add(
-                new SongItem(placeholderBitMap, "song", "artist", "album"));
+                new SongItem(placeholderBitMap, "song", "artist", "album", ""));
 
-        //SpotifyAppRemote
-        // Swiping viewet.
-        CardStackView cardStackView = findViewById(R.id.card_stack_view);
+        songsSwipedRight = new ArrayList<>();
+         */
+    }
+/*
+    private void onSpotifyConnected() {
+        Toast.makeText(this, "Connected!", Toast.LENGTH_LONG);
 
-        cardStackLayoutManager = new CardStackLayoutManager(this, new CardStackListener() {
+        spotifyHelper.makePlaylist("test", "test", false, songsSwipedRight, new VolleyCallBack<String>() {
             @Override
-            public void onCardDragging(Direction direction, float ratio) {
-
-            }
-
-            @Override
-            public void onCardSwiped(Direction direction) {
-                Toast.makeText(MainActivity.this, "Swiped", Toast.LENGTH_LONG).show();
-                mSpotifyAppRemote.getPlayerApi().skipNext();
-            }
-
-            @Override
-            public void onCardRewound() {
-
-            }
-
-            @Override
-            public void onCardCanceled() {
-
-            }
-
-            @Override
-            public void onCardAppeared(View view, int position) {
-
-            }
-
-            @Override
-            public void onCardDisappeared(View view, int position) {
-
+            public void onSuccess(String data) {
+                Toast.makeText(MainActivity.this, "WOW", Toast.LENGTH_LONG);
             }
         });
 
+        mPlayerStateSubscription = spotifyHelper.subscribeToPlayerState(new mySubscriptionEventCallback());
+
+        CardStackView cardStackView = findViewById(R.id.card_stack_view);
+
+        cardStackLayoutManager = new CardStackLayoutManager(this, new myCardStackListener());
 
         // Stack view
         cardStackAdapter = new CardStackAdapter(songItems);
         cardStackView.setLayoutManager(cardStackLayoutManager);
         cardStackView.setAdapter(cardStackAdapter);
         cardStackView.setItemAnimator(new DefaultItemAnimator());
-
-        // Spot
-        //Capabilities.
-        connect(true);
-
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
-    }
-
-    // Connects the SpotifyAppRemote class to spotify.
-    private void connect(boolean showAuthView) {
-
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
-
-        SpotifyAppRemote.connect(
-            getApplicationContext(),
-            new ConnectionParams.Builder(CLIENT_ID)
-                    .setRedirectUri(REDIRECT_URI)
-                    .showAuthView(showAuthView)
-                    .build(),
-            new Connector.ConnectionListener() {
-                @Override
-                public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                    mSpotifyAppRemote = spotifyAppRemote;
-                    MainActivity.this.onConnected();
-                }
-
-                @Override
-                public void onFailure(Throwable error) {
-                    logError(error);
-                    MainActivity.this.onDisconnected();
-                }
-            });
-    }
-
-    private void onConnected() {
-        Toast.makeText(this, "Connected!", Toast.LENGTH_LONG);
-        subscribeToPlayerState();
-        loadNextSong();
-    }
-
-
-    private void subscribeToPlayerState() {
-        if (mPlayerStateSubscription != null && !mPlayerStateSubscription.isCanceled()) {
-            mPlayerStateSubscription.cancel();
-            mPlayerStateSubscription = null;
-        }
-
-        mPlayerStateSubscription = (Subscription<PlayerState>) mSpotifyAppRemote
-                    .getPlayerApi()
-                    .subscribeToPlayerState()
-                    .setEventCallback(mPlayerStateEventCallback);
-    }
-
-    private void loadNextSong() {
-        mSpotifyAppRemote
-                .getContentApi()
-                .getRecommendedContentItems(ContentApi.ContentType.NAVIGATION)
-                .setResultCallback(new CallResult.ResultCallback<ListItems>() {
-                    @Override
-                    public void onResult(ListItems data) {
-                        ListItem listItem = data.items[1];
-                        mSpotifyAppRemote
-                                .getContentApi()
-                                .playContentItem(listItem)
-                                .setResultCallback(new CallResult.ResultCallback<Empty>() {
-                                    @Override
-                                    public void onResult(Empty data) {
-                                        Toast.makeText(MainActivity.this, "test", Toast.LENGTH_LONG);
-                                    }
-                                });
-                    }
-                });
-    }
-
-    private void onDisconnected() {
-        Toast.makeText(this, "Not connected...", Toast.LENGTH_LONG);
-    }
 
     private void logError(Throwable throwable) {
         Toast.makeText(this, R.string.err_generic_toast, Toast.LENGTH_SHORT).show();
         Log.e(TAG, "", throwable);
     }
 
-    public void onSkip(View view) {
-        mSpotifyAppRemote
-                .getPlayerApi()
-                .skipNext()
-                .setErrorCallback(mErrorCallback);
-    }
 
     private void loadTrack(Track track) {
-        // Find billede
-
-        mSpotifyAppRemote
+        spotifyHelper.mSpotifyAppRemote
             .getImagesApi()
             .getImage(track.imageUri, Image.Dimension.LARGE)
             .setResultCallback(
                 bitmap -> {
-                    SongItem songItem = new SongItem(bitmap, track.name, track.artist.name, track.album.name);
+                    SongItem songItem = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
                     cardStackAdapter.getItems().set(0, songItem);
 
                     // Vi lader som om en sang blev fjernet, så cardStackAdapteren ikke går til næste
                     // element.
                     cardStackAdapter.notifyItemRemoved(0);
                     cardStackAdapter.notifyItemChanged(0);
-
                 });
     }
+
+    class mySubscriptionEventCallback implements Subscription.EventCallback<PlayerState> {
+
+        @Override
+        public void onEvent(PlayerState playerState) {
+
+            if (playerState.track != null) {
+                // Load track onto screen.
+                loadTrack(playerState.track);
+            }
+        }
+    }
+
+    class myCardStackListener implements CardStackListener {
+
+        @Override
+        public void onCardDragging(Direction direction, float ratio) {
+
+        }
+
+        @Override
+        public void onCardSwiped(Direction direction) {
+            Toast.makeText(MainActivity.this, "Swiped", Toast.LENGTH_LONG).show();
+
+            if (direction == Direction.Right) {
+                songsSwipedRight.add(cardStackAdapter.getItems().get(0).getId());
+            }
+            if (direction == Direction.Left) {
+                spotifyHelper.addSongsToPlaylist("4GrVxxovGcP5FbV3qiA2th", songsSwipedRight);
+            }
+            spotifyHelper.skipTrack();
+        }
+
+
+
+        @Override
+        public void onCardRewound() {
+
+        }
+
+        @Override
+        public void onCardCanceled() {
+
+        }
+
+        @Override
+        public void onCardAppeared(View view, int position) {
+
+        }
+
+        @Override
+        public void onCardDisappeared(View view, int position) {
+
+        }
+    }
+    */
 }
 
 

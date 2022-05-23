@@ -4,13 +4,14 @@ import android.graphics.Bitmap;
 
 public class SongItem {
     private Bitmap image;
-    private String song, artist, album;
+    private String song, artist, album, id;
 
-    public SongItem(Bitmap image, String song, String artist, String album) {
+    public SongItem(Bitmap image, String song, String artist, String album, String id) {
         this.image = image;
         this.song = song;
         this.artist = artist;
         this.album = album;
+        this.id = id;
     }
 
     public Bitmap getImage() {
@@ -27,5 +28,9 @@ public class SongItem {
 
     public String getAlbum() {
         return album;
+    }
+
+    public String getId() {
+        return id;
     }
 }

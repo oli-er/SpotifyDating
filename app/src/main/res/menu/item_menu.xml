@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/nav_swipe"
+        android:title="Swipe"
+        android:icon="@drawable/ic_baseline_music_note_24"/>
+
+    <item android:id="@+id/nav_playlist"
+        android:title="Like"
+        android:icon="@drawable/ic_baseline_playlist_play_24"/>
+</menu>
