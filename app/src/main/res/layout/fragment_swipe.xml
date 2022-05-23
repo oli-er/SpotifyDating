@@ -34,7 +34,7 @@
 
         <TextView
             android:id="@+id/song_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Song"
@@ -43,12 +43,13 @@
             android:textSize="20dp"
             app:layout_constraintTop_toBottomOf="@id/album_image_fake"
             app:layout_constraintLeft_toLeftOf="@id/album_image_fake"
+            app:layout_constraintRight_toRightOf="@id/album_image_fake"
             android:layout_marginTop="20dp"
             android:layout_marginLeft="10dp"
             />
         <TextView
             android:id="@+id/song_artist"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Artist"
@@ -57,10 +58,11 @@
             android:textSize="15dp"
             app:layout_constraintTop_toBottomOf="@id/song_name"
             app:layout_constraintLeft_toLeftOf="@id/song_name"
+            app:layout_constraintRight_toRightOf="@id/song_name"
             />
         <TextView
             android:id="@+id/song_album"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Album"
@@ -68,7 +70,28 @@
             android:textColor="@color/grey"
             android:textSize="15dp"
             app:layout_constraintTop_toBottomOf="@id/song_artist"
-            app:layout_constraintLeft_toLeftOf="@id/song_name"
+            app:layout_constraintLeft_toLeftOf="@id/song_artist"
+            app:layout_constraintRight_toRightOf="@id/song_artist"
             />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@id/appbar_fake">
+
+            <ImageButton
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/skip_btn"
+                android:src="@drawable/ic_baseline_close_24"
+                />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50sp"
+            android:id="@+id/appbar_fake"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

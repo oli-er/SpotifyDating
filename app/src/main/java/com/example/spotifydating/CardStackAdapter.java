@@ -41,6 +41,15 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.setData(items.get(position));
+
+        // Animation
+        Animation fadeIn = new AlphaAnimation(0, 1);
+        fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
+        fadeIn.setDuration(1500);
+
+        AnimationSet animation = new AnimationSet(false);
+        animation.addAnimation(fadeIn);
+        holder.itemView.startAnimation(fadeIn);
     }
 
     // Viewholderen udfylder data i vores view.
@@ -57,19 +66,12 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
 
             albumImage = (ImageView) view.findViewById(R.id.album_image);
 
-            // Animation
-            Animation fadeIn = new AlphaAnimation(0, 1);
-            fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
-            fadeIn.setDuration(1500);
-
-            AnimationSet animation = new AnimationSet(false);
-            animation.addAnimation(fadeIn);
-            view.startAnimation(fadeIn);
         }
 
         public void setData(SongItem data) {
             // Load the album picture.
             albumImage.setImageBitmap(data.getImage());
+
             /*
             Picasso.get()
                     .load(data.getImage())

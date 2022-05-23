@@ -14,7 +14,9 @@ import com.google.gson.Gson;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
+import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.Subscription;
+import com.spotify.protocol.types.Empty;
 import com.spotify.protocol.types.PlayerState;
 import com.android.volley.Response.Listener;
 
@@ -71,8 +73,8 @@ public class SpotifyAPIHelper {
         connectAppRemote(connectionCallback);
     }
 
-    public void skipTrack() {
-        mSpotifyAppRemote.getPlayerApi().skipNext();
+    public CallResult<Empty> skipTrack() {
+        return mSpotifyAppRemote.getPlayerApi().skipNext();
     }
 
     public Subscription<PlayerState> subscribeToPlayerState(Subscription.EventCallback<PlayerState> playerStateEventCallback) {

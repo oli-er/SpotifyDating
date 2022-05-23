@@ -3,15 +3,12 @@ package com.example.spotifydating;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.os.Bundle;
 
-import androidx.annotation.ColorInt;
 import androidx.fragment.app.Fragment;
 import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -23,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.spotify.protocol.client.ErrorCallback;
 import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.Image;
@@ -34,8 +30,10 @@ import com.yuyakaido.android.cardstackview.CardStackListener;
 import com.yuyakaido.android.cardstackview.CardStackView;
 import com.yuyakaido.android.cardstackview.Direction;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -72,10 +70,17 @@ public class SwipeFragment extends Fragment {
 
     private SharedPreferences sharedPreferences;
 
+    private MainActivity.SongManager songManager;
+
+    private SongItem currentSong;
+
     public SwipeFragment() {
         // Required empty public constructor
     }
 
+    public SwipeFragment(MainActivity.SongManager songManager) {
+        this.songManager = songManager;
+    }
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -117,8 +122,6 @@ public class SwipeFragment extends Fragment {
                 R.drawable.ic_launcher_foreground);
         songItems.add(
                 new SongItem(placeholderBitMap, "song", "artist", "album", ""));
-
-        songsSwipedRight = new ArrayList<>();
 
         // Inflate the layout for this fragment
         return view;
@@ -166,8 +169,8 @@ public class SwipeFragment extends Fragment {
                             songArtistTV.setText(track.artist.name);
                             songAlbumTV.setText(track.album.name);
 
-                            SongItem songItem = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
-                            cardStackAdapter.getItems().set(0, songItem);
+                            currentSong = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
+                            cardStackAdapter.getItems().set(0, currentSong);
 
                             // Vi lader som om en sang blev fjernet, så cardStackAdapteren ikke går til næste
                             // element.
@@ -181,9 +184,7 @@ public class SwipeFragment extends Fragment {
 
         @Override
         public void onEvent(PlayerState playerState) {
-
-            if (playerState.track != null) {
-                // Load track onto screen.
+            if (currentSong == null || !Objects.equals(playerState.track.uri, currentSong.getId())) {
                 loadTrack(playerState.track);
             }
         }
@@ -198,17 +199,31 @@ public class SwipeFragment extends Fragment {
 
         @Override
         public void onCardSwiped(Direction direction) {
-            Toast.makeText(getActivity(), "Swiped", Toast.LENGTH_LONG).show();
 
             if (direction == Direction.Right) {
-                ArrayList<String> song = new ArrayList<>();
-                song.add(cardStackAdapter.getItems().get(0).getId());
-                sharedPreferences = getActivity().getSharedPreferences("SPOTIFY",0);
-                String test = sharedPreferences.getString("playlist", "");
-                spotifyHelper.addSongsToPlaylist(test, song);
+                Toast.makeText(getActivity(), "Swiped Right", Toast.LENGTH_LONG).show();
+
+                SongItem song = cardStackAdapter.getItems().get(0);
+                if (!songManager.getSongs().contains(song)) {
+                    songManager.addSong(cardStackAdapter.getItems().get(0));
+                }
+
+                //ArrayList<String> song = new ArrayList<>();
+                //song.add(cardStackAdapter.getItems().get(0).getId());
+                //sharedPreferences = getActivity().getSharedPreferences("SPOTIFY",0);
+                //String test = sharedPreferences.getString("playlist", "");
+                //spotifyHelper.addSongsToPlaylist(test, song);
 
             }
-            spotifyHelper.skipTrack();
+            spotifyHelper.skipTrack().setErrorCallback(new ErrorCallback() {
+                @Override
+                public void onError(Throwable t) {
+                    Toast.makeText(getContext(), "Du kan ikke skippe flere.", Toast.LENGTH_LONG).show();
+                    cardStackAdapter.getItems().set(0, currentSong);
+                    cardStackAdapter.notifyItemRemoved(0);
+                    cardStackAdapter.notifyItemInserted(0);
+                }
+            });
         }
 
 

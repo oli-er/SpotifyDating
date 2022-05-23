@@ -26,12 +26,10 @@ import java.util.List;
 
 public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHolder> {
 
-    List<PlaylistSong> itemList;
-    SpotifyAPIHelper spotifyAPIHelper;
+    List<SongItem> itemList;
 
-    public PlaylistAdapter(List<PlaylistSong> itemList, SpotifyAPIHelper spotifyAPIHelper) {
+    public PlaylistAdapter(List<SongItem> itemList) {
         this.itemList = itemList;
-        this.spotifyAPIHelper = spotifyAPIHelper;
     }
 
     @NonNull
@@ -65,24 +63,15 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             songNameTV = view.findViewById(R.id.playlist_song_name);
         }
 
-        public void setData(PlaylistSong data) {
-            // Load the album picture.
+        public void setData(SongItem data) {
 
-            //albumImage.setImageBitmap(data.getImage());
-            songNameTV.setText(data.getName());
+            songNameTV.setText(data.getSong());
 
-            if (spotifyAPIHelper.mSpotifyAppRemote.getImagesApi() == null) {
-                return;
-            }
-            spotifyAPIHelper.mSpotifyAppRemote
-                    .getImagesApi()
-                    .getImage(new ImageUri(""), Image.Dimension.LARGE)
-                    .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
-                        @Override
-                        public void onResult(Bitmap data) {
-                            albumImage.setImageBitmap(data);
-                        }
-                    });
+            albumImage.setImageBitmap(data.getImage());
         }
+    }
+
+    public void setItemList(List<SongItem> itemList) {
+        this.itemList = itemList;
     }
 }

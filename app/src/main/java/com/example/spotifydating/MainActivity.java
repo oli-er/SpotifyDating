@@ -91,28 +91,19 @@ public class MainActivity extends AppCompatActivity {
         Window window = this.getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
+        window.setStatusBarColor(ContextCompat.getColor(this, R.color.black));
 
         navigationView = findViewById(R.id.bottom_navigation);
 
-        SwipeFragment swipeFragment = new SwipeFragment();
-        PlaylistFragment playlistFragment = new PlaylistFragment();
+        SongManager songManager = new SongManager();
+
+        SwipeFragment swipeFragment = new SwipeFragment(songManager);
+        PlaylistFragment playlistFragment = new PlaylistFragment(songManager);
 
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.body_container, swipeFragment)
                 .commit();
-
-        SharedPreferences.Editor editor = getSharedPreferences("SPOTIFY", 0).edit();
-
-        SpotifyPlaylistHelper spotifyPlaylistHelper = new SpotifyPlaylistHelper(this);
-
-        spotifyPlaylistHelper.makePlaylist("SwipeMix", "Swipemix", false, new VolleyCallBack<String>() {
-            @Override
-            public void onSuccess(String data) {
-                editor.putString("playlist", data);
-            }
-        });
 
         navigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
@@ -144,126 +135,44 @@ public class MainActivity extends AppCompatActivity {
                 playlistFragment.onSpotifyConnected(spotifyAPIHelper);
             }
         });
-
-        /*
-        spotifyHelper = new SpotifyAPIHelper(this, new SpotifyAPIHelper.ConnectionCallback() {
-            @Override
-            public void onConnected() {
-                onSpotifyConnected();
-            }
-        });
-
-        songItems = new ArrayList<SongItem>();
-        Bitmap placeholderBitMap = BitmapFactory.decodeResource(this.getResources(),
-                R.drawable.ic_launcher_foreground);
-        songItems.add(
-                new SongItem(placeholderBitMap, "song", "artist", "album", ""));
-
-        songsSwipedRight = new ArrayList<>();
-         */
-    }
-/*
-    private void onSpotifyConnected() {
-        Toast.makeText(this, "Connected!", Toast.LENGTH_LONG);
-
-        spotifyHelper.makePlaylist("test", "test", false, songsSwipedRight, new VolleyCallBack<String>() {
-            @Override
-            public void onSuccess(String data) {
-                Toast.makeText(MainActivity.this, "WOW", Toast.LENGTH_LONG);
-            }
-        });
-
-        mPlayerStateSubscription = spotifyHelper.subscribeToPlayerState(new mySubscriptionEventCallback());
-
-        CardStackView cardStackView = findViewById(R.id.card_stack_view);
-
-        cardStackLayoutManager = new CardStackLayoutManager(this, new myCardStackListener());
-
-        // Stack view
-        cardStackAdapter = new CardStackAdapter(songItems);
-        cardStackView.setLayoutManager(cardStackLayoutManager);
-        cardStackView.setAdapter(cardStackAdapter);
-        cardStackView.setItemAnimator(new DefaultItemAnimator());
     }
 
+    public class SongManager {
+        private List<SongItem> playlistSongs;
+        private SongsCallBack songsCallBack;
 
-    private void logError(Throwable throwable) {
-        Toast.makeText(this, R.string.err_generic_toast, Toast.LENGTH_SHORT).show();
-        Log.e(TAG, "", throwable);
-    }
+        public SongManager() {
+            this.playlistSongs = new ArrayList<>();
+        }
 
+        public SongManager(List<SongItem> playlistSongs) {
+            this.playlistSongs = playlistSongs;
+        }
 
-    private void loadTrack(Track track) {
-        spotifyHelper.mSpotifyAppRemote
-            .getImagesApi()
-            .getImage(track.imageUri, Image.Dimension.LARGE)
-            .setResultCallback(
-                bitmap -> {
-                    SongItem songItem = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
-                    cardStackAdapter.getItems().set(0, songItem);
+        public void setSongsCallBack(SongsCallBack songsCallBack) {
+            this.songsCallBack = songsCallBack;
+            songsChanged();
+        }
 
-                    // Vi lader som om en sang blev fjernet, så cardStackAdapteren ikke går til næste
-                    // element.
-                    cardStackAdapter.notifyItemRemoved(0);
-                    cardStackAdapter.notifyItemChanged(0);
-                });
-    }
+        public void addSong(SongItem track) {
+            playlistSongs.add(track);
+            songsChanged();
+        }
 
-    class mySubscriptionEventCallback implements Subscription.EventCallback<PlayerState> {
-
-        @Override
-        public void onEvent(PlayerState playerState) {
-
-            if (playerState.track != null) {
-                // Load track onto screen.
-                loadTrack(playerState.track);
+        private void songsChanged() {
+            if (songsCallBack != null) {
+                songsCallBack.onSongsChanged(playlistSongs);
             }
         }
-    }
 
-    class myCardStackListener implements CardStackListener {
-
-        @Override
-        public void onCardDragging(Direction direction, float ratio) {
-
-        }
-
-        @Override
-        public void onCardSwiped(Direction direction) {
-            Toast.makeText(MainActivity.this, "Swiped", Toast.LENGTH_LONG).show();
-
-            if (direction == Direction.Right) {
-                songsSwipedRight.add(cardStackAdapter.getItems().get(0).getId());
-            }
-            if (direction == Direction.Left) {
-                spotifyHelper.addSongsToPlaylist("4GrVxxovGcP5FbV3qiA2th", songsSwipedRight);
-            }
-            spotifyHelper.skipTrack();
-        }
-
-
-
-        @Override
-        public void onCardRewound() {
-
-        }
-
-        @Override
-        public void onCardCanceled() {
-
-        }
-
-        @Override
-        public void onCardAppeared(View view, int position) {
-
-        }
-
-        @Override
-        public void onCardDisappeared(View view, int position) {
-
+        public List<SongItem> getSongs() {
+            return playlistSongs;
         }
     }
-    */
+
+    public interface SongsCallBack {
+        void onSongsChanged(List<SongItem> songs);
+    }
 }
 
 

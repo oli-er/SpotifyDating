@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".PlaylistFragment"
     android:background="@color/spotify_black">
 
@@ -12,4 +13,16 @@
         android:id="@+id/recycler_view">
     </androidx.recyclerview.widget.RecyclerView>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:textSize="20dp"
+            android:text="-"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>

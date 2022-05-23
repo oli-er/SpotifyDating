@@ -22,15 +22,18 @@ public class PlaylistFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private PlaylistAdapter recyclerAdapter;
-    private List<PlaylistSong> songItems;
-
     private SpotifyPlaylistHelper spotifyPlaylistHelper;
     private SpotifyAPIHelper spotifyAPIHelper;
+    private MainActivity.SongManager songManager;
+
 
     public PlaylistFragment() {
         // Required empty public constructor
     }
 
+    public PlaylistFragment(MainActivity.SongManager songManager) {
+        this.songManager = songManager;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,10 +46,9 @@ public class PlaylistFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_playlist, container, false);
 
-        songItems = new ArrayList<>();
 
         recyclerView = view.findViewById(R.id.recycler_view);
-        recyclerAdapter = new PlaylistAdapter(songItems, spotifyAPIHelper);
+        recyclerAdapter = new PlaylistAdapter(new ArrayList<SongItem>());
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(recyclerAdapter);
 
@@ -63,6 +65,8 @@ public class PlaylistFragment extends Fragment {
 
     private void loadSongs() {
 
+        songManager.setSongsCallBack(new SongsChangedHandler());
+        /*
         spotifyPlaylistHelper.get("2njXG7LJ8fIe25eiCy1CST", new VolleyCallBack<List<Track>>() {
             @Override
             public void onSuccess(List<Track> data) {
@@ -83,5 +87,15 @@ public class PlaylistFragment extends Fragment {
                 recyclerAdapter.notifyDataSetChanged();
             }
         });
+        */
+    }
+
+    private class SongsChangedHandler implements MainActivity.SongsCallBack {
+
+        @Override
+        public void onSongsChanged(List<SongItem> songs) {
+            recyclerAdapter.setItemList(songs);
+            recyclerAdapter.notifyDataSetChanged();
+        }
     }
 }

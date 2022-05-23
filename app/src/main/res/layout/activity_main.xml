@@ -16,5 +16,6 @@
         app:itemIconSize="40sp"
         app:labelVisibilityMode="unlabeled"
         app:itemIconTint="@drawable/item_selector"
-        android:id="@+id/bottom_navigation"/>
+        android:id="@+id/bottom_navigation"
+        />
 </RelativeLayout>
