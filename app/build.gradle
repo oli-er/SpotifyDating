@@ -60,6 +60,7 @@ dependencies {
 
     // Color extractor for album images
     implementation 'androidx.palette:palette:1.0.0'
+    testImplementation 'junit:junit:4.12'
 
     //implementation(name:'spot', ext:'aar')
     //testImplementation 'junit:junit:4.13.2'
