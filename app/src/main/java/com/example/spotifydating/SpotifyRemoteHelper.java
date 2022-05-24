@@ -29,9 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Enum til de forskellige anvendte endpoints i spotify API'en
 enum EndPoint {
     PLAYLIST("https://api.spotify.com/v1/me/playlists"),
-    SPECIFIC_PLAYLIST("https://api.spotify.com/v1/me/playlists/%s"),
     PLAYLISTME("https://api.spotify.com/v1/playlists/%s/tracks"),
     ;
 
@@ -47,48 +47,58 @@ enum EndPoint {
     }
 }
 
-interface VolleyCallBack<T> {
+// Callback til en web request.
+interface RequestCallBack<T> {
+
+    // Funktion, der køres når requesten lykkedes.
     void onSuccess(T data);
 }
 
-public class SpotifyAPIHelper {
+// Hjælperclass til spotifys remote applikation API.
+// Hjælper med interaktion med spotify appen.
+public class SpotifyRemoteHelper {
 
+    // Klient id til spotify projektet og callback uri.
     private static final String CLIENT_ID = "f9a4127598ed4dd4aed26e20f8d30374";
     private static final String REDIRECT_URI = "com.example.spotifydating://callback";
 
-    private SharedPreferences sharedPreferences;
-    private RequestQueue queue;
-
+    // Spotify remote objektet (bruges til at interegere med spotify appen).
     public SpotifyAppRemote mSpotifyAppRemote;
-    public Context mcontext;
 
+    public Context mcontext;
     public boolean connnected = false;
 
 
-    public SpotifyAPIHelper(Context context, ConnectionCallback connectionCallback) {
-        sharedPreferences = context.getSharedPreferences("SPOTIFY", 0);
-        queue = Volley.newRequestQueue(context);
+    public SpotifyRemoteHelper(Context context, ConnectionCallback connectionCallback) {
+        // Gem context.
         mcontext = context;
 
+        // Forbind appremote objektet.
         connectAppRemote(connectionCallback);
     }
 
+    // Funktion, som skipper nuværende sang.
     public CallResult<Empty> skipTrack() {
         return mSpotifyAppRemote.getPlayerApi().skipNext();
     }
 
+    // Funktion, som går til forrige sang.
     public CallResult<Empty> skipToPreviousTrack() {
         return mSpotifyAppRemote.getPlayerApi().skipPrevious();
     }
 
-
+    // Laver en subscription til playerstaten af spotify appen.
+    // Subscriptionen opdateres f.eks. hvis sangen ændres.
     public Subscription<PlayerState> subscribeToPlayerState(Subscription.EventCallback<PlayerState> playerStateEventCallback) {
+
+        // mpotifyAppRemoten til at danne en subscription og return den.
         return (Subscription<PlayerState>) mSpotifyAppRemote
                 .getPlayerApi()
                 .subscribeToPlayerState()
                 .setEventCallback(playerStateEventCallback);
     }
 
+    // Forbind SpotifyRemote klassen.
     private void connectAppRemote(ConnectionCallback connectionCallback) {
 
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
@@ -97,29 +107,29 @@ public class SpotifyAPIHelper {
                 mcontext,
                 new ConnectionParams.Builder(CLIENT_ID)
                         .setRedirectUri(REDIRECT_URI)
-                        .showAuthView(true)
+                        .showAuthView(true) // Vis en autoriseringsskærm.
                         .build(),
                 new Connector.ConnectionListener() {
                     @Override
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                        mSpotifyAppRemote = spotifyAppRemote;
+                        mSpotifyAppRemote = spotifyAppRemote; // Gem det forbundede objekt.
                         if (!connnected) {
-                            connectionCallback.onConnected();
+                            connectionCallback.onConnected(); // Kør callback funktion.
                             connnected = true;
                         }
                     }
 
+                    // Hvis der ikke kunne forbindes.
                     @Override
                     public void onFailure(Throwable error) {
-                        Log.d("AppRemote connection", error.toString());
-                        Toast.makeText(mcontext, "Kunne ikke forbinde.", Toast.LENGTH_LONG).show();
+                        // Giv brugeren besked
+                        Toast.makeText(mcontext, "Kunne ikke forbinde til spotify.", Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
+    // Callback funktion til når en forbindelse er lavet.
     interface ConnectionCallback {
         void onConnected();
     }
-
-
 }

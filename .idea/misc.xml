@@ -4,6 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.2880695443645084" />
+        <entry key="..\:/Users/hvamo/AndroidStudioProjects/SpotifyDating/app/src/main/res/layout/fragment_playlist.xml" value="0.3333333333333333" />
+        <entry key="..\:/Users/hvamo/AndroidStudioProjects/SpotifyDating/app/src/main/res/layout/song_card.xml" value="0.22" />
+        <entry key="..\:/Users/hvamo/AndroidStudioProjects/SpotifyDating/app/src/main/res/layout/song_playlist_card.xml" value="2.0" />
         <entry key="app/src/main/res/drawable/add_btn.xml" value="0.1965" />
         <entry key="app/src/main/res/drawable/add_playlist_btn.xml" value="0.326" />
         <entry key="app/src/main/res/drawable/btn_skip_closed.xml" value="0.1965" />
@@ -39,7 +42,7 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

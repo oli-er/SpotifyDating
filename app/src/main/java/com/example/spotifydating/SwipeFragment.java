@@ -1,14 +1,8 @@
 package com.example.spotifydating;
 
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.LinearGradient;
-import android.graphics.RadialGradient;
-import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -36,83 +30,59 @@ import com.yuyakaido.android.cardstackview.Direction;
 import com.yuyakaido.android.cardstackview.Duration;
 import com.yuyakaido.android.cardstackview.SwipeAnimationSetting;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link SwipeFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class SwipeFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     private static final String TAG = SwipeFragment.class.getSimpleName();
 
+    // Liste med sangene som vises (kun den nuværende sang).
     private List<SongItem> songItems;
+
+    // Manager af hendholdsvis aktion og indhold til cardStack
     private CardStackLayoutManager cardStackLayoutManager;
     private CardStackAdapter cardStackAdapter;
 
-    private final ErrorCallback mErrorCallback = this::logError;
-    private Subscription<PlayerState> mPlayerStateSubscription;
-
-    private SpotifyAPIHelper spotifyHelper;
-
-    private List<String> songsSwipedRight;
-
+    // Views
     private TextView songNameTV, songArtistTV, songAlbumTV;
-
     private ImageButton btnSkip, btnAdd, btnRewind;
+    private CardStackView cardStackView;
 
-    private SharedPreferences sharedPreferences;
+    // Hjælperklasse til spotify API'en.
+    private SpotifyRemoteHelper spotifyRemoteHelper;
 
-    private MainActivity.SongManager songManager;
+    // Manager til sangene som er swipet til højre.
+    private SongManager songManager;
 
+    // Sangen som er på skærmen lige nu.
     private SongItem currentSong;
 
-    private CardStackView cardStackView;
+    // Subscription til playerstaten af spotify playeren.
+    Subscription mPlayerStateSubscription;
 
     public SwipeFragment() {
         // Required empty public constructor
     }
 
-    public SwipeFragment(MainActivity.SongManager songManager) {
+    public SwipeFragment(SongManager songManager) {
         this.songManager = songManager;
-    }
-
-    public static SwipeFragment newInstance(String param1, String param2) {
-        SwipeFragment fragment = new SwipeFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_swipe, container, false);
 
+        // Hent views.
         songNameTV = view.findViewById(R.id.song_name);
         songArtistTV = view.findViewById(R.id.song_artist);
         songAlbumTV = view.findViewById(R.id.song_album);
@@ -120,6 +90,7 @@ public class SwipeFragment extends Fragment {
         btnAdd   = view.findViewById(R.id.btn_add);
         btnRewind = view.findViewById(R.id.btn_rewind);
 
+        // Sæt onclicklisteners (funktioner, der køres når knappe trykkes).
         btnSkip.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,7 +101,7 @@ public class SwipeFragment extends Fragment {
         btnRewind.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                spotifyHelper.skipToPreviousTrack();
+                spotifyRemoteHelper.skipToPreviousTrack();
             }
         });
 
@@ -141,54 +112,59 @@ public class SwipeFragment extends Fragment {
             }
         });
 
+        // Instanciate listen med vores sange.
         songItems = new ArrayList<SongItem>();
+
+        // Placeholder billede
         Bitmap placeholderBitMap = BitmapFactory.decodeResource(this.getResources(),
                 R.drawable.ic_launcher_foreground);
+
+        // Tilføj placeholder sang.
         songItems.add(
                 new SongItem(placeholderBitMap, "song", "artist", "album", ""));
-
 
         return view;
     }
 
+    // Funktion, der laver et automatisk swipe af albumbilledet.
     private void swipe(Direction direction) {
+
+        // Lav animaitonen til swipet.
         SwipeAnimationSetting setting = new SwipeAnimationSetting.Builder()
                 .setDirection(direction)
                 .setDuration(Duration.Normal.duration)
                 .setInterpolator(new AccelerateInterpolator())
                 .build();
 
+        // Set animationen og swipe.
         cardStackLayoutManager.setSwipeAnimationSetting(setting);
         cardStackView.swipe();
     }
 
-    public void onSpotifyConnected(SpotifyAPIHelper spotifyAPIHelper) {
-        spotifyHelper = spotifyAPIHelper;
-        Toast.makeText(getContext(), "Connected!", Toast.LENGTH_LONG);
+    // Funktion, der køres når spotify er forbundet.
+    public void onSpotifyConnected(SpotifyRemoteHelper spotifyRemoteHelper) {
 
-        mPlayerStateSubscription = spotifyHelper.subscribeToPlayerState(new SwipeFragment.mySubscriptionEventCallback());
+        // Gem spotifyRemoteHelper klassen, som blev dannet.
+        this.spotifyRemoteHelper = spotifyRemoteHelper;
+        Toast.makeText(getContext(), "Forbandt til spotify.", Toast.LENGTH_LONG);
 
+        // Subscribe til playerstaten.
+        mPlayerStateSubscription = this.spotifyRemoteHelper.subscribeToPlayerState(new SwipeFragment.mySubscriptionEventCallback());
+
+        // Dan vores cardstackview.
         cardStackView = getView().findViewById(R.id.card_stack_view);
-
         cardStackLayoutManager = new CardStackLayoutManager(getContext(), new SwipeFragment.myCardStackListener());
-
         cardStackAdapter = new CardStackAdapter(songItems);
         cardStackView.setLayoutManager(cardStackLayoutManager);
         cardStackView.setAdapter(cardStackAdapter);
         cardStackView.setItemAnimator(new DefaultItemAnimator());
     }
 
-
-    private void logError(Throwable throwable) {
-        Toast.makeText(getActivity(), R.string.err_generic_toast, Toast.LENGTH_SHORT).show();
-        Log.e(TAG, "", throwable);
-    }
-
-
+    // Load en sangs data ind i swiperen.
     private void loadTrack(Track track) {
-        spotifyHelper.mSpotifyAppRemote
+        spotifyRemoteHelper.mSpotifyAppRemote
                 .getImagesApi()
-                .getImage(track.imageUri, Image.Dimension.LARGE)
+                .getImage(track.imageUri, Image.Dimension.LARGE) // Hent album billedet.
                 .setResultCallback(
                         bitmap -> {
                             songNameTV.setText(track.name);
@@ -196,24 +172,32 @@ public class SwipeFragment extends Fragment {
                             songAlbumTV.setText(track.album.name);
 
                             currentSong = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
+
+                            // Sæt sangen til objektet i toppen af cardstacken (swiperen).
                             cardStackAdapter.getItems().set(0, currentSong);
 
                             cardStackAdapter.notifyItemRemoved(0);
                             cardStackAdapter.notifyItemChanged(0);
+
+                            // Skift baggrundsfarve.
                             setBackgroundColor(bitmap);
                         });
     }
 
+    // Callback klasse til spotify player subscription.
     class mySubscriptionEventCallback implements Subscription.EventCallback<PlayerState> {
 
         @Override
         public void onEvent(PlayerState playerState) {
+            // Hvis sangen er skiftet.
             if (currentSong == null || !Objects.equals(playerState.track.uri, currentSong.getId())) {
+                // Load sangen på skærmen.
                 loadTrack(playerState.track);
             }
         }
     }
 
+    // Manager til swiping af sange.
     class myCardStackListener implements CardStackListener {
 
         @Override
@@ -221,20 +205,29 @@ public class SwipeFragment extends Fragment {
 
         }
 
+        // Køres hvis en sang blev swipet på.
         @Override
         public void onCardSwiped(Direction direction) {
 
+            // Hvis den blev swipet til højre.
             if (direction == Direction.Right) {
-                Toast.makeText(getActivity(), "Swiped Right", Toast.LENGTH_LONG).show();
+
+                Toast.makeText(getActivity(), "Tilføjede sangen.", Toast.LENGTH_LONG).show();
 
                 SongItem song = cardStackAdapter.getItems().get(0);
+
+                // Hvis songmangeren ikke har sangen.
                 if (!songManager.getSongs().contains(song)) {
+                    // Tilføj sangen.
                     songManager.addSong(cardStackAdapter.getItems().get(0));
                 }
             }
-            spotifyHelper.skipTrack().setErrorCallback(new ErrorCallback() {
+
+            // Skip sangen.
+            spotifyRemoteHelper.skipTrack().setErrorCallback(new ErrorCallback() {
                 @Override
                 public void onError(Throwable t) {
+                    // Hvis brugeren ikke kunne skippe, giver vi notifikation.
                     Toast.makeText(getContext(), "Du kan ikke skippe flere.", Toast.LENGTH_LONG).show();
                     cardStackAdapter.getItems().set(0, currentSong);
                     cardStackAdapter.notifyItemRemoved(0);
@@ -266,13 +259,14 @@ public class SwipeFragment extends Fragment {
         }
     }
 
+    // Sæt baggrundsfarven udfra en sangs billede.
     public void setBackgroundColor(Bitmap bitmap) {
 
+        // Generer en palette med farver udfra sangen.
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             public void onGenerated(Palette p) {
-                int h = getView().getHeight();
-                int w = getView().getWidth();
 
+                // Hent farven for billedet.
                 int color = p.getLightVibrantColor(0);
                 if (color == 0) {
                     color = p.getVibrantColor(0);
@@ -284,12 +278,11 @@ public class SwipeFragment extends Fragment {
                     }
                 }
 
-                //ShapeDrawable mDrawable = new ShapeDrawable(new RectShape());
-
+                // Lav en gradiant udfra farven.
                 GradientDrawable gradiantDrawable = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                         new int[] {color, getResources().getColor(R.color.spotify_black)});
 
-                //mDrawable.getPaint().setShader(new LinearGradient(w/2, h/2, w, color, getResources().getColor(R.color.spotify_black), Shader.TileMode.CLAMP));
+                // Sæt gradienten til baggrunden.
                 getView().setBackground(gradiantDrawable);
             }
         });

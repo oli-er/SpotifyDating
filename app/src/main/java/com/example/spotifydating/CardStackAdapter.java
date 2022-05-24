@@ -3,13 +3,11 @@ package com.example.spotifydating;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +24,7 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
         this.items = items;
     }
 
+    // Funktion, som køres når kortets view skal laves.
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -38,15 +37,19 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
         return new ViewHolder(view);
     }
 
+    // Funktion, der køres når viewet (albumbilledet) kommer ind på skærmen.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
+        // Brug setData funktionen til at udfylde dataen i viewet (sæt billedet).
         holder.setData(items.get(position));
 
-        // Animation
+        // Vi laver et fade ind på 1,5 sekunder.
         Animation fadeIn = new AlphaAnimation(0, 1);
-        fadeIn.setInterpolator(new DecelerateInterpolator()); //add this
+        fadeIn.setInterpolator(new DecelerateInterpolator());
         fadeIn.setDuration(1500);
 
+        // Vi tilføjer animationen til vores view.
         AnimationSet animation = new AnimationSet(false);
         animation.addAnimation(fadeIn);
         holder.itemView.startAnimation(fadeIn);
@@ -55,35 +58,20 @@ public class CardStackAdapter extends RecyclerView.Adapter<CardStackAdapter.View
     // Viewholderen udfylder data i vores view.
     class ViewHolder extends RecyclerView.ViewHolder {
 
+        // Billedet til albumkortet.
         private ImageView albumImage;
-        private TextView songNameTV, artistNameTV, albumNameTV;
+
         public ViewHolder(View view) {
             super(view);
 
-            //songNameTV = (TextView) view.findViewById(R.id.song_name);
-            //artistNameTV = (TextView) view.findViewById(R.id.artist_name);
-            //albumNameTV = (TextView) view.findViewById(R.id.album_name);
-
+            // Vi hender albummets view fra resource ids.
             albumImage = (ImageView) view.findViewById(R.id.album_image);
-
         }
 
         public void setData(SongItem data) {
-            // Load the album picture.
+
+            // Sæt billedet med bitmap field.
             albumImage.setImageBitmap(data.getImage());
-
-            /*
-            Picasso.get()
-                    .load(data.getImage())
-                    .fit()
-                    .centerCrop()
-                    .into(albumImage);
-            */
-
-            // Set textviews.
-            //songNameTV.setText(data.getSong());
-            //artistNameTV.setText(data.getArtist());
-            //albumNameTV.setText(data.getAlbum());
         }
     }
 

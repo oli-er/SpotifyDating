@@ -51,7 +51,8 @@
                     android:textSize="10dp"
                     app:layout_constraintBottom_toBottomOf="@+id/playlist_song_image"
                     app:layout_constraintStart_toStartOf="@+id/playlist_song_name"
-                    app:layout_constraintTop_toBottomOf="@+id/playlist_song_name" />
+                    app:layout_constraintTop_toBottomOf="@+id/playlist_song_name"
+                    android:textColor="@color/grey"/>
 
             </LinearLayout>
 
