@@ -132,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onConnected() {
                 swipeFragment.onSpotifyConnected(spotifyAPIHelper);
-                playlistFragment.onSpotifyConnected(spotifyAPIHelper);
             }
         });
     }
@@ -159,11 +158,17 @@ public class MainActivity extends AppCompatActivity {
             songsChanged();
         }
 
+        public void clearSongs() {
+            playlistSongs.clear();
+            songsChanged();
+        }
+
         private void songsChanged() {
             if (songsCallBack != null) {
                 songsCallBack.onSongsChanged(playlistSongs);
             }
         }
+
 
         public List<SongItem> getSongs() {
             return playlistSongs;

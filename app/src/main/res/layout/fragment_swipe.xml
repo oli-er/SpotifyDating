@@ -77,14 +77,35 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@id/appbar_fake">
+            app:layout_constraintBottom_toTopOf="@id/appbar_fake"
+            app:flow_horizontalAlign="center"
+            android:gravity="center">
 
             <ImageButton
                 android:layout_width="80dp"
                 android:layout_height="80dp"
                 android:background="@drawable/skip_btn"
                 android:src="@drawable/ic_baseline_close_24"
+                android:id="@+id/btn_skip"
                 />
+
+            <ImageButton
+                android:layout_margin="30dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:background="@drawable/rewind_btn"
+                android:src="@drawable/ic_baseline_replay_24"
+                app:tint="@color/btn_rewind_blue"
+                android:id="@+id/btn_rewind"
+                />
+
+            <ImageButton
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/add_btn"
+                android:src="@drawable/ic_baseline_favorite_24"
+                app:tint="@color/btn_add_green"
+                android:id="@+id/btn_add"/>
         </LinearLayout>
 
         <TextView

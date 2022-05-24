@@ -3,19 +3,19 @@
     <item
         android:state_focused="true"
         android:state_pressed="true"
-        android:drawable="@drawable/closed_skip_btn"/>
+        android:drawable="@drawable/closed_add_btn"/>
 
     <item
         android:state_focused="false"
         android:state_pressed="true"
-        android:drawable="@drawable/closed_skip_btn">
+        android:drawable="@drawable/closed_add_btn">
     </item>
 
     <item>
         <shape android:shape="oval">
             <stroke
                 android:width="3dp"
-                android:color="@color/btn_skip_red" />
+                android:color="@color/btn_add_green" />
             <corners
                 android:radius="7dp" />
             <padding

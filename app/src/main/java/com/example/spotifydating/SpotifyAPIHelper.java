@@ -77,46 +77,16 @@ public class SpotifyAPIHelper {
         return mSpotifyAppRemote.getPlayerApi().skipNext();
     }
 
+    public CallResult<Empty> skipToPreviousTrack() {
+        return mSpotifyAppRemote.getPlayerApi().skipPrevious();
+    }
+
+
     public Subscription<PlayerState> subscribeToPlayerState(Subscription.EventCallback<PlayerState> playerStateEventCallback) {
         return (Subscription<PlayerState>) mSpotifyAppRemote
                 .getPlayerApi()
                 .subscribeToPlayerState()
                 .setEventCallback(playerStateEventCallback);
-    }
-
-    public void addSongsToPlaylist(String playlistID, List<String> songIDs) {
-        JSONArray uriArray = new JSONArray();
-        for (String songID: songIDs) {
-            uriArray.put(songID);
-        }
-
-        JSONObject uris = new JSONObject();
-        try {
-            uris.put("uris", uriArray);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        String url = String.format(EndPoint.PLAYLISTME.toString(), playlistID);
-        JsonObjectRequest jsonObjectRequest = preparePutRequest(uris, Request.Method.POST, url);
-
-        queue.add(jsonObjectRequest);
-    }
-
-    private JsonObjectRequest preparePutRequest(JSONObject payload, int method, String URL) {
-        return new JsonObjectRequest(method, URL, payload, response -> {
-        }, error -> {
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<>();
-                String token = sharedPreferences.getString("token", "");
-                String auth = "Bearer " + token;
-                headers.put("Authorization", auth);
-                headers.put("Content-Type", "application/json");
-                return headers;
-            }
-        };
     }
 
     private void connectAppRemote(ConnectionCallback connectionCallback) {

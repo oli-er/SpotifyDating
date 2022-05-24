@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:state_focused="true"
-        android:state_pressed="true"
-        android:drawable="@drawable/closed_skip_btn"/>
-
-    <item
-        android:state_focused="false"
-        android:state_pressed="true"
-        android:drawable="@drawable/closed_skip_btn">
-    </item>
-
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#c20586">
     <item>
         <shape android:shape="oval">
+            <solid android:color="@color/btn_skip_red">
+
+            </solid>
             <stroke
                 android:width="3dp"
                 android:color="@color/btn_skip_red" />
@@ -25,4 +18,4 @@
                 android:bottom="0dp" />
         </shape>
     </item>
-</selector>
+</ripple>

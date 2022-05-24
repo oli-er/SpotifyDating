@@ -10,9 +10,12 @@ import android.os.Trace;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.types.Artist;
+import com.spotify.protocol.types.Image;
 import com.spotify.protocol.types.Track;
 
 import java.util.ArrayList;
@@ -23,9 +26,8 @@ public class PlaylistFragment extends Fragment {
     private RecyclerView recyclerView;
     private PlaylistAdapter recyclerAdapter;
     private SpotifyPlaylistHelper spotifyPlaylistHelper;
-    private SpotifyAPIHelper spotifyAPIHelper;
     private MainActivity.SongManager songManager;
-
+    private ImageButton btnAdd, btnRemove;
 
     public PlaylistFragment() {
         // Required empty public constructor
@@ -55,39 +57,50 @@ public class PlaylistFragment extends Fragment {
         spotifyPlaylistHelper = new SpotifyPlaylistHelper(getContext());
         loadSongs();
 
+        btnAdd = view.findViewById(R.id.btn_add_playlist);
+        btnRemove = view.findViewById(R.id.btn_remove_playlist);
+
+        btnRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                songManager.clearSongs();
+            }
+        });
+
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addSongsToPlaylist();
+            }
+        });
         return view;
     }
 
-    public void onSpotifyConnected(SpotifyAPIHelper spotifyAPIHelper) {
-        this.spotifyAPIHelper = spotifyAPIHelper;
-    }
+    private void addSongsToPlaylist() {
 
+        List<String> songIDs = new ArrayList<>();
+
+        List<SongItem> songItems = songManager.getSongs();
+        for (SongItem songItem: songItems) {
+            songIDs.add(songItem.getId());
+        }
+
+        spotifyPlaylistHelper.makePlaylist(
+                "SwipeMix",
+                "Mix genenereret ved at bruge swipe featuren.",
+                false, new VolleyCallBack<String>() {
+                    @Override
+                    public void onSuccess(String data) {
+                        spotifyPlaylistHelper.addSongsToPlaylist(data, songIDs);
+                        Toast.makeText(getContext(), "Lavede en playlist.", Toast.LENGTH_SHORT);
+                        songManager.clearSongs();
+                    }
+                });
+    }
 
     private void loadSongs() {
 
         songManager.setSongsCallBack(new SongsChangedHandler());
-        /*
-        spotifyPlaylistHelper.get("2njXG7LJ8fIe25eiCy1CST", new VolleyCallBack<List<Track>>() {
-            @Override
-            public void onSuccess(List<Track> data) {
-                songItems.clear();
-                for (Track track : data) {
-                    String artist = "";
-                    if (track.artist == null) {
-                        for (Artist artist1 : track.artists) {
-                            artist += artist1.name + ", ";
-                        }
-                        artist = artist.substring(0, artist.length() - 2);
-                    } else {
-                        artist = track.artist.name;
-                    }
-                    songItems.add(new PlaylistSong(track.uri, track.name, artist, track.album.name));
-                }
-
-                recyclerAdapter.notifyDataSetChanged();
-            }
-        });
-        */
     }
 
     private class SongsChangedHandler implements MainActivity.SongsCallBack {

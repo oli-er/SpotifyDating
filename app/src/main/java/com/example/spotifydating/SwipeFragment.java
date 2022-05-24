@@ -3,8 +3,10 @@ package com.example.spotifydating;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.LinearGradient;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.os.Bundle;
@@ -17,6 +19,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +33,8 @@ import com.yuyakaido.android.cardstackview.CardStackLayoutManager;
 import com.yuyakaido.android.cardstackview.CardStackListener;
 import com.yuyakaido.android.cardstackview.CardStackView;
 import com.yuyakaido.android.cardstackview.Direction;
+import com.yuyakaido.android.cardstackview.Duration;
+import com.yuyakaido.android.cardstackview.SwipeAnimationSetting;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -64,15 +70,17 @@ public class SwipeFragment extends Fragment {
 
     private List<String> songsSwipedRight;
 
-    private TextView songNameTV;
-    private TextView songArtistTV;
-    private TextView songAlbumTV;
+    private TextView songNameTV, songArtistTV, songAlbumTV;
+
+    private ImageButton btnSkip, btnAdd, btnRewind;
 
     private SharedPreferences sharedPreferences;
 
     private MainActivity.SongManager songManager;
 
     private SongItem currentSong;
+
+    private CardStackView cardStackView;
 
     public SwipeFragment() {
         // Required empty public constructor
@@ -81,15 +89,7 @@ public class SwipeFragment extends Fragment {
     public SwipeFragment(MainActivity.SongManager songManager) {
         this.songManager = songManager;
     }
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SwipeFragment.
-     */
-    // TODO: Rename and change types and number of parameters
+
     public static SwipeFragment newInstance(String param1, String param2) {
         SwipeFragment fragment = new SwipeFragment();
         Bundle args = new Bundle();
@@ -116,6 +116,30 @@ public class SwipeFragment extends Fragment {
         songNameTV = view.findViewById(R.id.song_name);
         songArtistTV = view.findViewById(R.id.song_artist);
         songAlbumTV = view.findViewById(R.id.song_album);
+        btnSkip = view.findViewById(R.id.btn_skip);
+        btnAdd   = view.findViewById(R.id.btn_add);
+        btnRewind = view.findViewById(R.id.btn_rewind);
+
+        btnSkip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                swipe(Direction.Left);
+            }
+        });
+
+        btnRewind.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                spotifyHelper.skipToPreviousTrack();
+            }
+        });
+
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                swipe(Direction.Right);
+            }
+        });
 
         songItems = new ArrayList<SongItem>();
         Bitmap placeholderBitMap = BitmapFactory.decodeResource(this.getResources(),
@@ -123,29 +147,31 @@ public class SwipeFragment extends Fragment {
         songItems.add(
                 new SongItem(placeholderBitMap, "song", "artist", "album", ""));
 
-        // Inflate the layout for this fragment
+
         return view;
+    }
+
+    private void swipe(Direction direction) {
+        SwipeAnimationSetting setting = new SwipeAnimationSetting.Builder()
+                .setDirection(direction)
+                .setDuration(Duration.Normal.duration)
+                .setInterpolator(new AccelerateInterpolator())
+                .build();
+
+        cardStackLayoutManager.setSwipeAnimationSetting(setting);
+        cardStackView.swipe();
     }
 
     public void onSpotifyConnected(SpotifyAPIHelper spotifyAPIHelper) {
         spotifyHelper = spotifyAPIHelper;
         Toast.makeText(getContext(), "Connected!", Toast.LENGTH_LONG);
 
-        /*
-        spotifyHelper.makePlaylist("test", "test", false, songsSwipedRight, new VolleyCallBack<String>() {
-            @Override
-            public void onSuccess(String data) {
-                Toast.makeText(getContext(), "WOW", Toast.LENGTH_LONG);
-            }
-        });
-        */
         mPlayerStateSubscription = spotifyHelper.subscribeToPlayerState(new SwipeFragment.mySubscriptionEventCallback());
 
-        CardStackView cardStackView = getView().findViewById(R.id.card_stack_view);
+        cardStackView = getView().findViewById(R.id.card_stack_view);
 
         cardStackLayoutManager = new CardStackLayoutManager(getContext(), new SwipeFragment.myCardStackListener());
 
-        // Stack view
         cardStackAdapter = new CardStackAdapter(songItems);
         cardStackView.setLayoutManager(cardStackLayoutManager);
         cardStackView.setAdapter(cardStackAdapter);
@@ -172,8 +198,6 @@ public class SwipeFragment extends Fragment {
                             currentSong = new SongItem(bitmap, track.name, track.artist.name, track.album.name, track.uri);
                             cardStackAdapter.getItems().set(0, currentSong);
 
-                            // Vi lader som om en sang blev fjernet, så cardStackAdapteren ikke går til næste
-                            // element.
                             cardStackAdapter.notifyItemRemoved(0);
                             cardStackAdapter.notifyItemChanged(0);
                             setBackgroundColor(bitmap);
@@ -207,13 +231,6 @@ public class SwipeFragment extends Fragment {
                 if (!songManager.getSongs().contains(song)) {
                     songManager.addSong(cardStackAdapter.getItems().get(0));
                 }
-
-                //ArrayList<String> song = new ArrayList<>();
-                //song.add(cardStackAdapter.getItems().get(0).getId());
-                //sharedPreferences = getActivity().getSharedPreferences("SPOTIFY",0);
-                //String test = sharedPreferences.getString("playlist", "");
-                //spotifyHelper.addSongsToPlaylist(test, song);
-
             }
             spotifyHelper.skipTrack().setErrorCallback(new ErrorCallback() {
                 @Override
@@ -267,11 +284,13 @@ public class SwipeFragment extends Fragment {
                     }
                 }
 
-                ShapeDrawable mDrawable = new ShapeDrawable(new RectShape());
-                mDrawable.getPaint().setShader(new RadialGradient(w/2, h/2, w,
-                        color,
-                        getResources().getColor(R.color.spotify_black), Shader.TileMode.CLAMP));
-                getView().setBackground(mDrawable);
+                //ShapeDrawable mDrawable = new ShapeDrawable(new RectShape());
+
+                GradientDrawable gradiantDrawable = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[] {color, getResources().getColor(R.color.spotify_black)});
+
+                //mDrawable.getPaint().setShader(new LinearGradient(w/2, h/2, w, color, getResources().getColor(R.color.spotify_black), Shader.TileMode.CLAMP));
+                getView().setBackground(gradiantDrawable);
             }
         });
     }
