@@ -224,18 +224,15 @@ public class SwipeFragment extends Fragment {
             }
 
             // Skip sangen.
-            spotifyRemoteHelper.skipTrack().setErrorCallback(new ErrorCallback() {
-                @Override
-                public void onError(Throwable t) {
-                    // Hvis brugeren ikke kunne skippe, giver vi notifikation.
-                    Toast.makeText(getContext(), "Du kan ikke skippe flere.", Toast.LENGTH_LONG).show();
-                    cardStackAdapter.getItems().set(0, currentSong);
-                    cardStackAdapter.notifyItemRemoved(0);
-                    cardStackAdapter.notifyItemInserted(0);
-                }
-            });
+            spotifyRemoteHelper.skipTrack().setErrorCallback(t -> handleSkipError());
         }
 
+        public void handleSkipError() {
+            Toast.makeText(getContext(), "Du kan ikke skippe flere sange lige nu.", Toast.LENGTH_LONG).show();
+            cardStackAdapter.getItems().set(0, currentSong);
+            cardStackAdapter.notifyItemRemoved(0);
+            cardStackAdapter.notifyItemInserted(0);
+        }
 
 
         @Override

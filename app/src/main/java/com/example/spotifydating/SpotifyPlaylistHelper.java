@@ -32,7 +32,7 @@ public class SpotifyPlaylistHelper {
         queue = Volley.newRequestQueue(context);
     }
 
-    // Laver en playliste på spotifykontoen ved at sende en post request tit API'en.
+    // Laver en playliste på spotifykontoen ved at sende en post request til API'en.
     public void makePlaylist (String name, String description, boolean isPublic, final RequestCallBack<String> callBack) {
 
         // Lav en payload, som indeholder playlistens navn, beskrivelse og om den er offentlig.

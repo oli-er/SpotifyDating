@@ -6,10 +6,7 @@ import java.util.List;
 // Manager til brugerens swipede sange.
 public class SongManager {
 
-    // Liste med sangene, som er swipet til højre på.
     private List<SongItem> playlistSongs;
-
-    // Callback til når sangene ændres.
     private SongsCallBack songsCallBack;
 
     public SongManager() {

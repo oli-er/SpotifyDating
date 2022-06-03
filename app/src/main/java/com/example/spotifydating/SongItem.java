@@ -5,9 +5,7 @@ import android.graphics.Bitmap;
 // Objekt, der representerer en sang.
 public class SongItem {
 
-    // Billedet for sangens albumcover.
     private Bitmap image;
-
     private String song, artist, album, id;
 
     public SongItem(Bitmap image, String song, String artist, String album, String id) {
